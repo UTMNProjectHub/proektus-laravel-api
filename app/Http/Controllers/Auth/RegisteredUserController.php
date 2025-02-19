@@ -9,7 +9,9 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules;
+use function Laravel\Prompts\error;
 
 class RegisteredUserController extends Controller
 {
@@ -18,16 +20,26 @@ class RegisteredUserController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(Request $request): Response
+    public function store(Request $request): \Illuminate\Http\JsonResponse
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
+            'firstname' => ['required', 'string', 'max:255'],
+            'surname' => ['required', 'string', 'max:255'],
+            'middlename' => ['string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+        if ($validator->fails()) {
+            return response()->json([$validator->messages()], 500);
+        }
+
         $user = User::create([
             'name' => $request->name,
+            'firstname' => $request->firstname,
+            'surname' => $request->surname,
+            'middlename' => $request->middlename,
             'email' => $request->email,
             'password' => Hash::make($request->string('password')),
         ]);
@@ -36,6 +48,6 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return response()->noContent();
+        return response()->json(['ok'], 200);
     }
 }
