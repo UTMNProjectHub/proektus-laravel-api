@@ -25,8 +25,8 @@ Route::prefix('/admin')->group(function () {
     });
 })->middleware(['auth:sanctum', 'role:admin']);
 
-Route::prefix('/project')->group(function () {
+Route::prefix('/file')->group(function () {
     Route::controller(\App\Http\Controllers\Project\ProjectFileController::class)->group(function () {
-        Route::post('/file/upload', 'upload');
+        Route::post('/upload', 'upload');
     });
 });
