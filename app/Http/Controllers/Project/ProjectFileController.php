@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Project;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use function Laravel\Prompts\error;
 
 class ProjectFileController extends Controller
 {
@@ -24,6 +24,15 @@ class ProjectFileController extends Controller
 
         try {
             Storage::disk('project-files')->put($file->getClientOriginalName(), $file->get());
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+
+        try {
+            Redis::lpush('file-tasks', json_encode([
+                'file' => $file->getClientOriginalName(),
+                'user' => $request->user()->id,
+            ]));
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
