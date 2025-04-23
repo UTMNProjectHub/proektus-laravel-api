@@ -30,3 +30,11 @@ Route::prefix('/file')->group(function () {
         Route::post('/upload', 'upload');
     });
 });
+
+Route::controller(App\Http\Controllers\Project\ProjectController::class)->group(function () {
+    Route::get('/projects', 'index');
+    Route::get('/projects/{id}', 'show');
+    Route::post('/projects', 'store');
+    Route::put('/projects/{id}', 'update');
+    Route::delete('/projects/{id}', 'destroy');
+});
