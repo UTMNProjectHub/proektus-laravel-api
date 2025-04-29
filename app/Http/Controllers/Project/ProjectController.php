@@ -56,6 +56,29 @@ class ProjectController extends Controller
             return response()->json(['error' => 'Project not found: ' . $e->getMessage()], 404);
         }
 
+        try {
+            $project->load(['users', 'tags', 'links', 'urls']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to load project details: ' . $e->getMessage()], 500);
+        }
+
+        return response()->json($project, 200);
+    }
+
+    public function showProjectFiles($id)
+    {
+        try {
+            $project = Project::findOrFail($id);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Project not found: ' . $e->getMessage()], 404);
+        }
+
+        try {
+            $project->load(['files']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to load project files: ' . $e->getMessage()], 500);
+        }
+
         return response()->json($project, 200);
     }
 
