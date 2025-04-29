@@ -33,4 +33,16 @@ class FileService
             throw new \Exception('Failed to store file: ' . $e->getMessage(), 500);
         }
     }
+
+    public function delete(Authenticatable $user, $file_id) {
+        try {
+            $file = $user->files()->findOrFail($file_id);
+            Storage::disk('project-files')->delete($file->s3_key);
+            $file->delete();
+        } catch (\Exception $e) {
+            throw new \Exception('Failed to delete file: ' . $e->getMessage(), 500);
+        }
+
+        return response()->json(['message' => 'File deleted successfully'], 200);
+    }
 }

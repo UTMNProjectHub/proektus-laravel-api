@@ -65,7 +65,7 @@ class ProjectController extends Controller
         return response()->json($project, 200);
     }
 
-    public function showProjectFiles($id)
+    public function getFiles($id)
     {
         try {
             $project = Project::findOrFail($id);
@@ -74,12 +74,12 @@ class ProjectController extends Controller
         }
 
         try {
-            $project->load(['files']);
+            $files = $project->files()->with(['user'])->get();
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to load project files: ' . $e->getMessage()], 500);
         }
 
-        return response()->json($project, 200);
+        return response()->json($files, 200);
     }
 
     public function store(Request $request)

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Project;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ProjectFileStoreRequest;
 use App\Models\Project;
+use App\Models\ProjectFile;
 use App\Services\FileService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -46,6 +47,32 @@ class ProjectFileController extends Controller
         } else {
             return response()->json(['message' => 'You do not have permission to upload files to this project'], 403);
         }
+    }
+
+    function destroy(Request $request, FileService $fileService) {
+        $validator = Validator::make($request->all(), [
+            'file_id' => ['required', 'integer', 'exists:project_files,id'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $file = ProjectFile::findOrFail($request['file_id']);
+
+        $user = Auth::user();
+
+        if (Gate::denies('can-edit-project', [$file->project(), $user])) {
+            return response()->json(['message' => 'You do not have permission to delete this file'], 403);
+        }
+
+        try {
+            $fileService->delete($user, $request['file_id']);
+        } catch (\Exception $e) {
+            return response()->json([$e->getMessage()], 500);
+        }
+
+        return response()->json(['message' => 'File deleted successfully'], 200);
     }
 
 }
