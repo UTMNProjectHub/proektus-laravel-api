@@ -27,9 +27,8 @@ class FileService
             $file = $user->files()->create([
                 's3_key' => $file_objectKey,
                 'original_filename' => $file->getClientOriginalName(),
+                'project_id' => $project_id,
             ]);
-
-            $file->project()->attach($project_id); // TODO: attach to project, needs testing
         } catch (\Exception $e) {
             throw new \Exception('Failed to store file: ' . $e->getMessage(), 500);
         }
