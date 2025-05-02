@@ -51,7 +51,7 @@ class ProjectFileController extends Controller
 
     function destroy(Request $request, FileService $fileService) {
         $validator = Validator::make($request->all(), [
-            'file_id' => ['required', 'integer', 'exists:project_files,id'],
+            'file_id' => ['required', 'integer', 'exists:files,id'],
         ]);
 
         if ($validator->fails()) {
@@ -62,7 +62,7 @@ class ProjectFileController extends Controller
 
         $user = Auth::user();
 
-        if (Gate::denies('can-edit-project', [$file->project(), $user])) {
+        if (Gate::denies('can-edit-project', [$file->project, $user])) {
             return response()->json(['message' => 'You do not have permission to delete this file'], 403);
         }
 
