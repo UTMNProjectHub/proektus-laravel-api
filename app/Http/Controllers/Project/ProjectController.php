@@ -7,7 +7,6 @@ use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use function Laravel\Prompts\error;
 
 class ProjectController extends Controller
 {
@@ -57,7 +56,7 @@ class ProjectController extends Controller
         }
 
         try {
-            $project->load(['users', 'tags', 'links', 'urls']);
+            $project->load(['users', 'tags', 'urls']);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to load project details: ' . $e->getMessage()], 500);
         }
@@ -137,6 +136,34 @@ class ProjectController extends Controller
 
     public function update(Request $request, $id)
     {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->messages(), 422);
+        }
+
+        try {
+            $project = Project::findOrFail($id);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Project not found: ' . $e->getMessage()], 404);
+        }
+
+        $project->name = $request->input('name');
+        $project->description = $request->input('description');
+
+        try
+        {
+            $project->save();
+        }
+        catch (\Exception $e)
+        {
+            return response()->json(['error' => 'Failed to update project: ' . $e->getMessage()], 500);
+        }
+
+        return response()->json($project, 200);
 
     }
 

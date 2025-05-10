@@ -17,6 +17,24 @@ use Illuminate\Support\Str;
 
 class ProjectFileController extends Controller
 {
+    function index(Request $request, $project_id)
+    {
+        $project = Project::find($project_id);
+
+        if (!$project) {
+            return response()->json(['error' => 'Project not found'], 404);
+        }
+
+        $user = Auth::user();
+
+        if (Gate::allows('can-edit-project', [$project, $user])) {
+            $files = $project->files()->with(['user'])->get();
+            return response()->json(['files' => $files], 200);
+        } else {
+            return response()->json(['message' => 'You do not have permission to view files for this project'], 403);
+        }
+    }
+
     function upload(Request $request, FileService $fileService)
     {
         $validator = Validator::make($request->all(), [
@@ -27,6 +45,8 @@ class ProjectFileController extends Controller
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
+
+        Gate::authorize('can-edit-project', [$request['project_id']]);
 
         $project = Project::find($request['project_id']);
 
@@ -73,6 +93,23 @@ class ProjectFileController extends Controller
         }
 
         return response()->json(['message' => 'File deleted successfully'], 200);
+    }
+
+    function download(Request $request, $file_id)
+    {
+        $file = ProjectFile::findOrFail($file_id);
+
+        $user = Auth::user();
+
+        if (Gate::denies('can-edit-project', [$file->project, $user])) {
+            return response()->json(['message' => 'You do not have permission to download this file'], 403);
+        }
+
+        try {
+            return Storage::disk('project-files')->download($file->s3_key, $file->original_filename);
+        } catch (\Exception $e) {
+            return response()->json([$e->getMessage()], 500);
+        }
     }
 
 }

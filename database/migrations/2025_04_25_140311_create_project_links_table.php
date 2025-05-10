@@ -14,8 +14,7 @@ return new class extends Migration
         Schema::create('project_links', function (Blueprint $table) {
             $table->id();
             $table->foreignId('project_id')->constrained('projects', 'id')->onDelete('cascade');
-            $table->string('url');
-            $table->string('type');
+            $table->foreignId('used_project_id')->constrained('projects', 'id')->onDelete('cascade');
             $table->timestamps();
         });
     }

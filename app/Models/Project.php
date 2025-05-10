@@ -32,11 +32,6 @@ class Project extends Model
         return $this->belongsToMany(Tag::class, 'projects_tags');
     }
 
-    function links(): HasMany
-    {
-        return $this->hasMany(ProjectLink::class);
-    }
-
     function urls(): HasMany
     {
         return $this->HasMany(ProjectURL::class, 'project_id', 'id');
