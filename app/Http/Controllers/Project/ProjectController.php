@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Project;
 
 use App\Http\Controllers\Controller;
 use App\Models\Project;
+use Illuminate\Auth\Access\Gate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -55,6 +56,10 @@ class ProjectController extends Controller
             return response()->json(['error' => 'Project not found: ' . $e->getMessage()], 404);
         }
 
+        if (response()->user()->cannot('view', $project)) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
         try {
             $project->load(['users', 'tags', 'urls']);
         } catch (\Exception $e) {
@@ -72,6 +77,10 @@ class ProjectController extends Controller
             return response()->json(['error' => 'Project not found: ' . $e->getMessage()], 404);
         }
 
+        if (response()->user()->cannot('view', $project)) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
         try {
             $files = $project->files()->with(['user'])->get();
         } catch (\Exception $e) {
@@ -83,9 +92,6 @@ class ProjectController extends Controller
 
     public function store(Request $request)
     {
-
-        Auth::guard();
-
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -151,6 +157,10 @@ class ProjectController extends Controller
             return response()->json(['error' => 'Project not found: ' . $e->getMessage()], 404);
         }
 
+        if (response()->user()->cannot('update', $project)) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
         $project->name = $request->input('name');
         $project->description = $request->input('description');
 
@@ -169,6 +179,22 @@ class ProjectController extends Controller
 
     public function destroy($id)
     {
+        try {
+            $project = Project::findOrFail($id);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Project not found: ' . $e->getMessage()], 404);
+        }
 
+        if (response()->user()->cannot('delete', $project)) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        try {
+            $project->delete();
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to delete project: ' . $e->getMessage()], 500);
+        }
+
+        return response()->json(['message' => 'Project deleted successfully'], 200);
     }
 }
