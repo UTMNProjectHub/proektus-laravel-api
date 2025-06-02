@@ -2,13 +2,18 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 
 class Project extends Model
 {
+    /** @use HasFactory<\Database\Factories\ProjectFactory> */
+    use HasFactory, softDeletes;
+
     protected $fillable = [
         'name',
         'description',
@@ -21,5 +26,20 @@ class Project extends Model
         return $this->belongsToMany(User::class, 'project_participants')
             ->withPivot('role')
             ->withTimestamps();
+    }
+
+    function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(Tag::class, 'projects_tags');
+    }
+
+    function urls(): HasMany
+    {
+        return $this->HasMany(ProjectURL::class, 'project_id', 'id');
+    }
+
+    function files(): HasMany
+    {
+        return $this->hasMany(ProjectFile::class);
     }
 }
