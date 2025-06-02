@@ -25,7 +25,7 @@ class ProjectPolicy
             return true;
         }
 
-        if ($project->users->contains($user)) {
+        if ($project->users()->contains($user)) {
             return true;
         }
 
@@ -51,7 +51,7 @@ class ProjectPolicy
 
     public function addUser(User $user, Project $project): bool
     {
-        if ($project->users->contains($user) && $project->users->where('user_id', $user->id)->wherePivot('role', ['admin', 'owner'])->exists()) {
+        if ($project->users->contains($user) && $project->users->where('user_id', $user->id)->where('role', ['admin', 'owner'])) {
             return true;
         }
 
@@ -64,7 +64,7 @@ class ProjectPolicy
 
     public function removeUser(User $user, Project $project): bool
     {
-        if ($project->users->contains($user) && $project->users->where('user_id', $user->id)->wherePivot('role', ['admin', 'owner'])->exists()) {
+        if ($project->users->contains($user) && $project->users->where('user_id', $user->id)->where('role', ['admin', 'owner'])) {
             return true;
         }
 
@@ -77,7 +77,7 @@ class ProjectPolicy
 
     public function updateUser(User $user, Project $project): bool
     {
-        if ($project->users->contains($user) && $project->users->where('user_id', $user->id)->wherePivot('role', ['admin', 'owner'])->exists()) {
+        if ($project->users->contains($user) && $project->users->where('user_id', $user->id)->where('role', ['admin', 'owner'])) {
             return true;
         }
 
@@ -113,7 +113,7 @@ class ProjectPolicy
      */
     public function delete(User $user, Project $project): bool
     {
-        if ($project->users->contains($user) && $project->users->where('user_id', $user->id)->wherePivot('role', ['admin', 'owner'])->exists()) {
+        if ($project->users->contains($user) && $project->users->where('user_id', $user->id)->where('role', ['admin', 'owner'])) {
             return true;
         }
 
@@ -137,11 +137,21 @@ class ProjectPolicy
      */
     public function forceDelete(User $user, Project $project): bool
     {
-        if ($project->users->contains($user) && $project->users->where('user_id', $user->id)->wherePivot('role', ['owner'])->exists()) {
+        if ($project->users->contains($user) && $project->users->where('user_id', $user->id)->where('role', ['owner'])) {
             return true;
         }
 
         if ($user->hasRole('admin')) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function storeFiles(User $user, Project $project): bool
+    {
+        if ($project->users->contains($user))
+        {
             return true;
         }
 

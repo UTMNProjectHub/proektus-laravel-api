@@ -51,7 +51,7 @@ class ProjectUserController extends Controller
         ], 200);
     }
 
-    function destroy(Request $request, $project_id)
+    function destroy(Request $request, $project_id, $user_id)
     {
         $project = Project::find($project_id);
 
@@ -63,22 +63,29 @@ class ProjectUserController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $user_id = $request->input('users');
-
         if (!$user_id) {
             return response()->json(['error' => 'User ID are required'], 422);
         }
 
-        foreach ($user_id as $id) {
-            $project->users()->detach($id);
+        try {
+            $editableUser = $project->users()->where('user_id', $user_id)->first();
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'User not found: ' . $e->getMessage()], 404);
         }
+
+        try {
+            $project->users()->detach($editableUser->id);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to remove user: ' . $e->getMessage()], 500);
+        }
+
 
         return response()->json([
             'message' => 'User removed from project successfully',
         ], 200);
     }
 
-    function update(Request $request, $project_id)
+    function update(Request $request, $project_id, $user_id)
     {
         $project = Project::find($project_id);
         $user = $request->user();
@@ -92,11 +99,10 @@ class ProjectUserController extends Controller
         }
 
         $request->validate([
-            'user_id' => 'required|integer|exists:users,id',
             'role' => 'required|string|in:admin,owner,member',
         ]);
 
-        $editableUser = $project->users()->where('user_id', $request->input('user_id'))->first();
+        $editableUser = $project->users()->where('user_id', $user_id)->first();
 
         if (!$editableUser) {
             return response()->json(['error' => 'User not found'], 404);
@@ -110,12 +116,12 @@ class ProjectUserController extends Controller
             return response()->json(['error' => 'You cannot change the role of an admin or owner'], 403);
         }
 
-        if ($user->pivot->role === 'admin' && $editableUser->pivot->role === 'admin') {
+        if ($user->projects()->where('project_id', $project_id)->first()?->pivot->role === 'admin' && $editableUser->pivot->role === 'admin') {
             return response()->json(['error' => 'You cannot change the role of an admin'], 403);
         }
 
         try {
-            $project->users()->updateExistingPivot($editableUser->user_id, ['role' => $request->input('role')]);
+            $project->users()->updateExistingPivot($editableUser->id, ['role' => $request->input('role')]);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to update user role: ' . $e->getMessage()], 500);
         }

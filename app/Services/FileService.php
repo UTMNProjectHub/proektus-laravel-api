@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\ProcessProjectFile;
 use App\Models\User;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\UploadedFile;
@@ -17,11 +18,12 @@ class FileService
         error_log($file_objectKey);
 
         try {
-            Storage::disk('project-files')->put($file_objectKey, $file->get(), ['Metadata' => ['original_name' => $file->getClientOriginalName()]]);
+            $uploaded_file = Storage::disk('project-files')->put($file_objectKey, $file->get(), ['Metadata' => ['original_name' => $file->getClientOriginalName()]]);
 
-            Redis::lpush('file-tasks', json_encode([
-                'file_id' => $file_uuid,
-                'object_key' => $file_objectKey,
+            $task = Redis::lpush('file-tasks-requests', json_encode([
+                'user_id' => $user->id,
+                'project_id' => $project_id,
+                'object_keys' => [$file_objectKey],
             ], JSON_UNESCAPED_SLASHES));
 
             $file = $user->files()->create([
@@ -30,7 +32,21 @@ class FileService
                 'project_id' => $project_id,
             ]);
         } catch (\Exception $e) {
+            if ($uploaded_file) {
+                Storage::disk('project-files')->delete($file_objectKey);
+            }
+
+            if ($task) {
+                $task->delete();
+            }
+
+            if ($file) {
+                $file->delete();
+            }
+
             throw new \Exception('Failed to store file: ' . $e->getMessage(), 500);
+
+
         }
     }
 

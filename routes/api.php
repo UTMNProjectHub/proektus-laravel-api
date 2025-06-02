@@ -45,7 +45,7 @@ Route::prefix('/projects')->group(function () {
     Route::controller(App\Http\Controllers\Project\ProjectController::class)->group(function () {
         Route::get('/', 'index');
         Route::get('/{id}', 'show');
-        Route::post('/', 'store')->middleware(['auth:sanctum']); // there needs to be a middleware that controls access to proj creation
+        Route::post('/', 'store')->middleware(['auth:sanctum']);
         Route::put('/{id}', 'update')->middleware(['auth:sanctum']);
         Route::delete('/{id}', 'destroy')->middleware(['auth:sanctum']);
     });
@@ -59,6 +59,7 @@ Route::prefix('/projects')->group(function () {
     Route::controller(\App\Http\Controllers\Project\ProjectUserController::class)->group(function () {
         Route::get('/{project_id}/users', 'index')->middleware(['auth:sanctum']);
         Route::post('/{project_id}/users', 'store')->middleware(['auth:sanctum']);
+        Route::put('/{project_id}/users/{user_id}', 'update')->middleware(['auth:sanctum']);
         Route::delete('/{project_id}/users/{user_id}', 'destroy')->middleware(['auth:sanctum']);
     });
 });

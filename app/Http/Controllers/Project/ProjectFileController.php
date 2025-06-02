@@ -46,27 +46,25 @@ class ProjectFileController extends Controller
             return response()->json($validator->errors(), 422);
         }
 
-        Gate::authorize('can-edit-project', [$request['project_id']]);
-
         $project = Project::find($request['project_id']);
+
+        if ($request->user()->cannot('storeFiles', $project)) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
 
         error_log($project);
 
         $user = Auth::user();
 
-        if (Gate::allows('can-edit-project', [$project, $user])) {
-            $file = $request->file('file');
+        $file = $request->file('file');
 
-            try {
-                $fileService->store($user, $file, $project->id);
-            } catch (\Exception $e) {
-                return response()->json([$e->getMessage()], 500);
-            }
-
-            return response()->json(['message' => 'File uploaded successfully'], 200);
-        } else {
-            return response()->json(['message' => 'You do not have permission to upload files to this project'], 403);
+        try {
+            $fileService->store($user, $file, $project->id);
+        } catch (\Exception $e) {
+            return response()->json([$e->getMessage()], 500);
         }
+
+        return response()->json(['message' => 'File uploaded successfully'], 200);
     }
 
     function destroy(Request $request, FileService $fileService) {

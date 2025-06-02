@@ -56,7 +56,7 @@ class ProjectController extends Controller
             return response()->json(['error' => 'Project not found: ' . $e->getMessage()], 404);
         }
 
-        if (response()->user()->cannot('view', $project)) {
+        if (request()->user()->cannot('view', $project)) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
