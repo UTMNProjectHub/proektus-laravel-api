@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Project;
-use App\Models\ProjectLink;
 use App\Models\ProjectURL;
 use App\Models\Tag;
 use App\Models\User;
@@ -24,12 +23,6 @@ class ProjectSeeder extends Seeder
             // attach repo url
             $project->urls()->create([
                 'repository_url' => fake()->url(),
-            ]);
-
-            // attach link
-            $project->links()->create([
-                'url' => fake()->url(),
-                'type' => fake()->randomElement(['website', 'documentation', 'blog']),
             ]);
 
             // attach owner

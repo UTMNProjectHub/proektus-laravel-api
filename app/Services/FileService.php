@@ -15,7 +15,6 @@ class FileService
     public function store(Authenticatable $user, UploadedFile $file, $project_id) {
         $file_uuid = Str::uuid();
         $file_objectKey = "user$user->id/{$file_uuid}.{$file->getClientOriginalExtension()}";
-        error_log($file_objectKey);
 
         try {
             $uploaded_file = Storage::disk('project-files')->put($file_objectKey, $file->get(), ['Metadata' => ['original_name' => $file->getClientOriginalName()]]);

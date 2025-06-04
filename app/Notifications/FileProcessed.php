@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Carbon;
@@ -11,9 +12,9 @@ class FileProcessed extends Notification
 {
     use Queueable;
 
-    protected $project_id;
-    protected $user_id;
-    protected $message;
+    protected int $project_id;
+    protected int $user_id;
+    protected string $message;
 
     /**
      * Create a new notification instance.
@@ -41,9 +42,9 @@ class FileProcessed extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-                    ->line('The introduction to the notification.')
-                    ->action('Notification Action', url('/'))
-                    ->line('Thank you for using our application!');
+            ->line('The introduction to the notification.')
+            ->action('Notification Action', url('/'))
+            ->line('Thank you for using our application!');
     }
 
     /**
@@ -58,6 +59,15 @@ class FileProcessed extends Notification
             'project_id' => $this->project_id,
             'user_id' => $this->user_id,
         ];
+    }
+
+    public function toBroadcast(object $notifiable): BroadcastMessage
+    {
+        return new BroadcastMessage([
+            'message' => $this->message,
+            'project_id' => $this->project_id,
+            'user_id' => $this->user_id,
+        ]);
     }
 
     public function databaseType(): string
