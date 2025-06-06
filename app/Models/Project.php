@@ -42,4 +42,19 @@ class Project extends Model
     {
         return $this->hasMany(ProjectFile::class);
     }
+
+    public function scopeVisible($query, User $user)
+    {
+        return $query->where(function ($subQuery) use ($user) {
+            $subQuery->where('privacy', 'public')
+                ->orWhereHas('users', function ($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                })->orWhere(function ($q) use ($user) {
+                    $q->whereHas('users', function ($subQuery) use ($user) {
+                        $subQuery->where('role', 'admin')
+                            ->where('user_id', $user->id);
+                    });
+                });
+        });
+    }
 }

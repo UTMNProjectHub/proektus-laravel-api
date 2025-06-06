@@ -25,7 +25,7 @@ class ProjectPolicy
             return true;
         }
 
-        if ($project->users()->contains($user)) {
+        if ($project->users->contains($user)) {
             return true;
         }
 

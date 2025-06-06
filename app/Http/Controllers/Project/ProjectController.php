@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Project;
 
 use App\Http\Controllers\Controller;
 use App\Models\Project;
+use App\Models\User;
 use Illuminate\Auth\Access\Gate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,39 +15,43 @@ class ProjectController extends Controller
     // список проектов с пагинацией
     public function index(Request $request)
     {
+        $per_page = $request->input('per_page', 8);
+        $user = Auth::user();
+
+
+        if ($user) {
+            $projects = Project::visible($user);
+        } else {
+            return response()->json(Project::where('privacy', 'public'), 200);
+        }
 
         if ($request->has('user')) {
-            try {
-                $user = $request->input('user');
-                $projects = Project::whereHas('users', function ($query) use ($user) {
-                    $query->where('user_id', $user);
-                })->paginate(10);
-            } catch (\Exception $e) {
-                return response()->json(['error' => 'Failed to retrieve projects: ' . $e->getMessage()], 500);
-            }
-        } else {
-            try {
-                $projects = Project::paginate(10);
-            } catch (\Exception $e) {
-                return response()->json(['error' => 'Failed to retrieve projects: ' . $e->getMessage()], 500);
-            }
+            $projects->whereHas('users', function ($query) use ($request) {
+                $query->where('user_id', $request->input('user'));
+            });
         }
-
-        return response()->json($projects, 200);
-    }
-
-    public function indexByUser($page = null)
-    {
-        Auth::guard()->user();
 
         try {
-            $projects = Auth::user()->projects()->paginate(10);
+            $projects = $projects->paginate($per_page);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to retrieve projects: ' . $e->getMessage()], 500);
+            return response()->json(['error' => 'Не удалось получить проекты ' . $e->getMessage()], 500);
         }
 
         return response()->json($projects, 200);
     }
+
+//    public function indexByUser($page = null)
+//    {
+//        Auth::guard()->user();
+//
+//        try {
+//            $projects = Auth::user()->projects()->paginate(10);
+//        } catch (\Exception $e) {
+//            return response()->json(['error' => 'Failed to retrieve projects: ' . $e->getMessage()], 500);
+//        }
+//
+//        return response()->json($projects, 200);
+//    }
 
     public function show($id)
     {
@@ -77,7 +82,7 @@ class ProjectController extends Controller
             return response()->json(['error' => 'Project not found: ' . $e->getMessage()], 404);
         }
 
-        if (response()->user()->cannot('view', $project)) {
+        if (request()->user()->cannot('view', $project)) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -127,13 +132,10 @@ class ProjectController extends Controller
         }
 
 
-        try
-        {
+        try {
             $project->save();
             $project->users()->attach(Auth::user()->id, ['role' => 'owner']);
-        }
-        catch (\Exception $e)
-        {
+        } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to create project: ' . $e->getMessage()], 500);
         }
 
@@ -145,6 +147,7 @@ class ProjectController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'privacy' => 'string|in:public,private',
         ]);
 
         if ($validator->fails()) {
@@ -157,19 +160,17 @@ class ProjectController extends Controller
             return response()->json(['error' => 'Project not found: ' . $e->getMessage()], 404);
         }
 
-        if (response()->user()->cannot('update', $project)) {
+        if (request()->user()->cannot('update', $project)) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
         $project->name = $request->input('name');
         $project->description = $request->input('description');
+        $project->privacy = $request->input('privacy', 'public');
 
-        try
-        {
+        try {
             $project->save();
-        }
-        catch (\Exception $e)
-        {
+        } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to update project: ' . $e->getMessage()], 500);
         }
 
@@ -185,7 +186,7 @@ class ProjectController extends Controller
             return response()->json(['error' => 'Project not found: ' . $e->getMessage()], 404);
         }
 
-        if (response()->user()->cannot('delete', $project)) {
+        if (request()->user()->cannot('delete', $project)) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
