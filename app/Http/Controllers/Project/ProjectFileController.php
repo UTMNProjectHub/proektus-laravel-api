@@ -49,7 +49,7 @@ class ProjectFileController extends Controller
 
         error_log($project);
 
-        $user = response()->user();
+        $user = request()->user();
 
         $file = $request->file('file');
 

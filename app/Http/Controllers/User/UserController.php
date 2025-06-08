@@ -3,73 +3,66 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use function Pest\Laravel\json;
+use Illuminate\Validation\Rules;
+use Illuminate\Support\Facades\Password;
 
 class UserController extends Controller
 {
-    function index(Request $request): JsonResponse
+    public function show(Request $request): \Illuminate\Http\JsonResponse
     {
-        $isAdmin = Auth::user()->hasRole('admin');
+        $user = request()->user();
 
-        if (! $isAdmin) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+        if (!$user) {
+            return response()->json(['error' => 'Пользователь не найден'], 404);
         }
 
-        return response()->json([
-            'users' => User::all(),
-        ], 200);
-    }
-
-    function destroy(string $user): JsonResponse
-    {
-        $isAdmin = Auth::user()->hasRole('admin');
-
-        if (! $isAdmin) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
-
-        $user = User::find($user);
-
-        if (! $user) {
-            return response()->json(['error' => 'User not found'], 404);
-        }
-
-        $user->softDelete();
-
-        return response()->json([
-            'message' => 'User deleted successfully',
-        ], 200);
-    }
-
-    function search(Request $request) {
-        $username = $request->input('username');
-        $users = User::where('name', 'like', "%$username%")->get();
-        return response()->json([
-            'users' => $users,
-        ], 200);
-    }
-
-    function show(string $user): JsonResponse
-    {
-        $isAdmin = Auth::user()->hasRole('admin');
-
-        if (! $isAdmin) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
-
-        $user = User::find($user);
-
-        if (! $user) {
-            return response()->json(['error' => 'User not found'], 404);
-        }
+        $user->load('roles');
 
         return response()->json([
             'user' => $user,
         ], 200);
+    }
+
+
+    function update(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $user = request()->user();
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+            'firstname' => 'string|max:255',
+            'lastname' => 'string|max:255',
+            'middlename' => 'nullable|string|max:255',
+            'old_password' => ['required', 'string','min:8', 'current_password'],
+            'password' => [Rules\Password::defaults()]
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $user->fill([
+            'name' => $request->input('name'),
+            'email' => $request->input('email'),
+            'firstname' => $request->input('firstname'),
+            'lastname' => $request->input('lastname'),
+            'middlename' => $request->input('middlename'),
+        ]);
+
+        if ($request->filled('password')) {
+            $user->password = bcrypt($request->input('password'));
+            auth()->login($user);
+        }
+
+        try {
+            $user->save();
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Не удалось обновить данные пользователя: ' . $e->getMessage()], 500);
+        }
+
+        return response()->json(['message' => 'Данные пользователя успешно обновлены', 'user' => $user], 200);
     }
 }

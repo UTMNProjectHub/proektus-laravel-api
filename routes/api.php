@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\User\UserController;
+use App\Http\Controllers\User\AdminUserController;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,22 +12,22 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
 
 //Route::group((array)'/admin', function () {
 //    Route::group((array)'/users', function () {
-//        Route::get('/', 'UserController@index');
-//        Route::get('/{user}', 'UserController@show');
-////        Route::put('/{user}', 'UserController@update');
-//        Route::delete('/{user}', 'UserController@destroy');
+//        Route::get('/', 'AdminUserController@index');
+//        Route::get('/{user}', 'AdminUserController@show');
+////        Route::put('/{user}', 'AdminUserController@update');
+//        Route::delete('/{user}', 'AdminUserController@destroy');
 //    });
 //})->middleware(['auth:sanctum', 'role:admin']);
 
 Route::prefix('/admin')->group(function () {
-    Route::controller(\App\Http\Controllers\User\UserController::class)->group(function () {
+    Route::controller(\App\Http\Controllers\User\AdminUserController::class)->group(function () {
         Route::get('/users/', 'index');
         Route::get('/users/{user}', 'show');
         Route::delete('users/{user}', 'destroy');
     });
 })->middleware(['auth:sanctum', 'role:admin']);
 
-Route::controller(UserController::class)->group(function () {
+Route::controller(AdminUserController::class)->group(function () {
     Route::get('/users/search', 'search');
 });
 
@@ -36,6 +36,13 @@ Route::prefix('/file')->group(function () {
         Route::post('/upload', 'upload');
         Route::delete('/delete', 'destroy');
         Route::get('/download/{file_id}', 'download');
+    })->middleware(['auth:sanctum']);
+});
+
+Route::prefix('/profile')->group(function () {
+    Route::controller(\App\Http\Controllers\User\UserController::class)->group(function () {
+        Route::get('/', 'show');
+        Route::put('/', 'update');
     })->middleware(['auth:sanctum']);
 });
 
