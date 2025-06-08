@@ -6,10 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use function Pest\Laravel\json;
 
 class UserController extends Controller
 {
-    function index(): JsonResponse
+    function index(Request $request): JsonResponse
     {
         $isAdmin = Auth::user()->hasRole('admin');
 
@@ -40,6 +43,14 @@ class UserController extends Controller
 
         return response()->json([
             'message' => 'User deleted successfully',
+        ], 200);
+    }
+
+    function search(Request $request) {
+        $username = $request->input('username');
+        $users = User::where('name', 'like', "%$username%")->get();
+        return response()->json([
+            'users' => $users,
         ], 200);
     }
 
