@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Services\FileService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 
@@ -20,6 +22,21 @@ class Project extends Model
         'logo',
         'cover',
     ];
+
+    public static function boot()
+    {
+        parent::boot();
+
+        static::deleting(function ($model) {
+            $model->files()->each(function ($file) {
+                $file->delete();
+            });
+
+            $model->urls()->each(function ($url) {
+                $url->delete();
+            });
+        });
+    }
 
     function users(): BelongsToMany
     {
@@ -45,16 +62,22 @@ class Project extends Model
 
     public function scopeVisible($query, User $user)
     {
-        return $query->where(function ($subQuery) use ($user) {
-            $subQuery->where('privacy', 'public')
+        if ($user->getRoleNames()->intersect(['admin', 'teacher'])->isNotEmpty()) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($user) {
+            $q->where('privacy', 'public')
                 ->orWhereHas('users', function ($q) use ($user) {
                     $q->where('user_id', $user->id);
-                })->orWhere(function ($q) use ($user) {
-                    $q->whereHas('users', function ($subQuery) use ($user) {
-                        $subQuery->where('role', 'admin')
-                            ->where('user_id', $user->id);
-                    });
                 });
         });
+
+    }
+
+    public function getReadmeAttribute(): ?string
+    {
+        $file = $this->files()->where('original_filename', 'README.md')->first();
+        return $file ? $file->contents : null;
     }
 }

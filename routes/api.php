@@ -62,4 +62,9 @@ Route::prefix('/projects')->group(function () {
         Route::put('/{project_id}/users/{user_id}', 'update')->middleware(['auth:sanctum']);
         Route::delete('/{project_id}/users/{user_id}', 'destroy')->middleware(['auth:sanctum']);
     });
+
+    Route::controller(\App\Http\Controllers\ProjectReadmeController::class)->group(function () {
+        Route::get('/{project_id}/readme', 'index');
+        Route::put('/{project_id}/readme', 'update')->middleware(['auth:sanctum']);
+    });
 });

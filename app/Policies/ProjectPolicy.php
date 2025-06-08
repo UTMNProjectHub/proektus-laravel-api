@@ -42,7 +42,7 @@ class ProjectPolicy
             return true;
         }
 
-        if ($user->hasRole('admin') || $user->hasRole('teacher')) {
+        if ($user->hasRole(['admin', 'teacher'])) {
             return true;
         }
 
@@ -55,7 +55,7 @@ class ProjectPolicy
             return true;
         }
 
-        if ($user->hasRole('admin') || $user->hasRole('teacher')) {
+        if ($user->hasRole(['admin', 'teacher'])) {
             return true;
         }
 
@@ -68,7 +68,7 @@ class ProjectPolicy
             return true;
         }
 
-        if ($user->hasRole('admin') || $user->hasRole('teacher')) {
+        if ($user->hasRole(['admin', 'teacher'])) {
             return true;
         }
 
@@ -81,7 +81,7 @@ class ProjectPolicy
             return true;
         }
 
-        if ($user->hasRole('admin') || $user->hasRole('teacher')) {
+        if ($user->hasRole(['admin', 'teacher'])) {
             return true;
         }
 
@@ -105,6 +105,10 @@ class ProjectPolicy
             return true;
         }
 
+        if ($user->hasRole(['admin', 'teacher'])) {
+            return true;
+        }
+
         return false;
     }
 
@@ -117,7 +121,7 @@ class ProjectPolicy
             return true;
         }
 
-        if ($user->hasRole('admin') || $user->hasRole('teacher')) {
+        if ($user->hasRole(['admin', 'teacher'])) {
             return true;
         }
 
@@ -152,6 +156,10 @@ class ProjectPolicy
     {
         if ($project->users->contains($user))
         {
+            return true;
+        }
+
+        if ($user->hasRole(['admin', 'teacher'])) {
             return true;
         }
 

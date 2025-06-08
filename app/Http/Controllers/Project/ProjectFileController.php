@@ -19,19 +19,14 @@ class ProjectFileController extends Controller
 {
     function index(Request $request, $project_id)
     {
-        $project = Project::find($project_id);
-
-        if (!$project) {
-            return response()->json(['error' => 'Project not found'], 404);
-        }
-
+        $project = Project::findOrFail($project_id);
         $user = Auth::user();
 
-        if (Gate::allows('can-edit-project', [$project, $user])) {
+        if ($project::visible($user)) {
             $files = $project->files()->with(['user'])->get();
             return response()->json(['files' => $files], 200);
         } else {
-            return response()->json(['message' => 'You do not have permission to view files for this project'], 403);
+            return response()->json(['message' => 'У вас нет прав на просмотр файлов этого проекта'], 403);
         }
     }
 
@@ -54,7 +49,7 @@ class ProjectFileController extends Controller
 
         error_log($project);
 
-        $user = Auth::user();
+        $user = response()->user();
 
         $file = $request->file('file');
 
@@ -64,7 +59,7 @@ class ProjectFileController extends Controller
             return response()->json([$e->getMessage()], 500);
         }
 
-        return response()->json(['message' => 'File uploaded successfully'], 200);
+        return response()->json(['message' => 'Файл загружен успешно'], 200);
     }
 
     function destroy(Request $request, FileService $fileService) {
@@ -77,11 +72,10 @@ class ProjectFileController extends Controller
         }
 
         $file = ProjectFile::findOrFail($request['file_id']);
-
-        $user = Auth::user();
+        $user = $request->user();
 
         if (Gate::denies('can-edit-project', [$file->project, $user])) {
-            return response()->json(['message' => 'You do not have permission to delete this file'], 403);
+            return response()->json(['message' => 'У вас нет прав на удаление этого файла'], 403);
         }
 
         try {
@@ -90,7 +84,7 @@ class ProjectFileController extends Controller
             return response()->json([$e->getMessage()], 500);
         }
 
-        return response()->json(['message' => 'File deleted successfully'], 200);
+        return response()->json(['message' => 'Файл удалён успешно'], 200);
     }
 
     function download(Request $request, $file_id)
@@ -100,7 +94,7 @@ class ProjectFileController extends Controller
         $user = Auth::user();
 
         if (Gate::denies('can-edit-project', [$file->project, $user])) {
-            return response()->json(['message' => 'You do not have permission to download this file'], 403);
+            return response()->json(['message' => 'У вас нет прав на загрузку этого файла'], 403);
         }
 
         try {

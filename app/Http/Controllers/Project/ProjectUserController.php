@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Project;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 
 class ProjectUserController extends Controller
@@ -51,37 +52,33 @@ class ProjectUserController extends Controller
         ], 200);
     }
 
-    function destroy(Request $request, $project_id, $user_id)
+    function destroy(Request $request, int $project_id, int $user_id)
     {
-        $project = Project::find($project_id);
-
-        if (!$project) {
-            return response()->json(['error' => 'Project not found'], 404);
-        }
+        $project = Project::findOrFail($project_id);
 
         if ($request->user()->cannot('removeUser', $project)) {
-            return response()->json(['error' => 'Unauthorized'], 403);
+            return response()->json(['error' => 'У вас нет прав на это действие.'], 403);
         }
 
-        if (!$user_id) {
-            return response()->json(['error' => 'User ID are required'], 422);
+        if ($request->user()->id === $user_id) {
+            return response()->json(['error' => 'Вы не можете удалить сами себя из проекта.'], 500);
         }
 
-        try {
-            $editableUser = $project->users()->where('user_id', $user_id)->first();
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'User not found: ' . $e->getMessage()], 404);
+        $editableUser = $project->users()->where('user_id', $user_id)->first();
+
+        if (!$editableUser) {
+            return response()->json(['error' => 'Пользователь не найден.'], 404);
         }
 
         try {
             $project->users()->detach($editableUser->id);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to remove user: ' . $e->getMessage()], 500);
+            return response()->json(['error' => 'Не получилось удалить пользователя: ' . $e->getMessage()], 500);
         }
 
 
         return response()->json([
-            'message' => 'User removed from project successfully',
+            'message' => 'Пользователь успешно удалён из проекта.',
         ], 200);
     }
 

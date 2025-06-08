@@ -32,26 +32,13 @@ class ProjectController extends Controller
         }
 
         try {
-            $projects = $projects->paginate($per_page);
+            $projects = $projects->with('tags')->paginate($per_page);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Не удалось получить проекты ' . $e->getMessage()], 500);
         }
 
         return response()->json($projects, 200);
     }
-
-//    public function indexByUser($page = null)
-//    {
-//        Auth::guard()->user();
-//
-//        try {
-//            $projects = Auth::user()->projects()->paginate(10);
-//        } catch (\Exception $e) {
-//            return response()->json(['error' => 'Failed to retrieve projects: ' . $e->getMessage()], 500);
-//        }
-//
-//        return response()->json($projects, 200);
-//    }
 
     public function show($id)
     {
@@ -72,27 +59,6 @@ class ProjectController extends Controller
         }
 
         return response()->json($project, 200);
-    }
-
-    public function getFiles($id)
-    {
-        try {
-            $project = Project::findOrFail($id);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Project not found: ' . $e->getMessage()], 404);
-        }
-
-        if (request()->user()->cannot('view', $project)) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
-
-        try {
-            $files = $project->files()->with(['user'])->get();
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to load project files: ' . $e->getMessage()], 500);
-        }
-
-        return response()->json($files, 200);
     }
 
     public function store(Request $request)
@@ -126,6 +92,7 @@ class ProjectController extends Controller
             if ($request->hasFile('cover')) {
                 $coverPath = $request->file('cover')->store('covers', 'public');
                 $project->cover = $coverPath;
+                error_log('cover_present');
             }
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to upload files: ' . $e->getMessage()], 500);
@@ -134,7 +101,7 @@ class ProjectController extends Controller
 
         try {
             $project->save();
-            $project->users()->attach(Auth::user()->id, ['role' => 'owner']);
+            $project->users()->attach(request()->user()->id, ['role' => 'owner']);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to create project: ' . $e->getMessage()], 500);
         }
@@ -148,6 +115,9 @@ class ProjectController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'privacy' => 'string|in:public,private',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'cover' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'repository_url' => 'nullable|url',
         ]);
 
         if ($validator->fails()) {
@@ -157,21 +127,45 @@ class ProjectController extends Controller
         try {
             $project = Project::findOrFail($id);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Project not found: ' . $e->getMessage()], 404);
+            return response()->json(['error' => 'Проект не найден: ' . $e->getMessage()], 404);
         }
 
         if (request()->user()->cannot('update', $project)) {
-            return response()->json(['error' => 'Unauthorized'], 403);
+            return response()->json(['error' => 'У вас нет доступа'], 403);
         }
 
         $project->name = $request->input('name');
         $project->description = $request->input('description');
         $project->privacy = $request->input('privacy', 'public');
 
+        if ($request->has('repository_url')) {
+            $project->urls()->updateOrCreate(
+                ['project_id' => $project->id, 'repository_url' => $request->input('repository_url')]
+            );
+        }
+
+        if ($request->hasFile('logo')) {
+            try {
+                $logoPath = $request->file('logo')->store('logos', 'public');
+                $project->logo = $logoPath;
+            } catch (\Exception $e) {
+                return response()->json(['error' => 'Не удалось загрузить логотип: ' . $e->getMessage()], 500);
+            }
+        }
+
+        if ($request->hasFile('cover')) {
+            try {
+                $coverPath = $request->file('cover')->store('covers', 'public');
+                $project->cover = $coverPath;
+            } catch (\Exception $e) {
+                return response()->json(['error' => 'Не удалось загрузить обложку: ' . $e->getMessage()], 500);
+            }
+        }
+
         try {
             $project->save();
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to update project: ' . $e->getMessage()], 500);
+            return response()->json(['error' => 'Не удалось обновить проект: ' . $e->getMessage()], 500);
         }
 
         return response()->json($project, 200);
