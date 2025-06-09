@@ -15,6 +15,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('project_id')->constrained('projects')->onDelete('cascade');
             $table->string('key');
+
+            $table->unique(['project_id', 'key'], 'uq_project_keys_project_tag');
+
             $table->timestamps();
         });
     }
