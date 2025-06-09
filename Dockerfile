@@ -34,6 +34,8 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install opcache \
     && docker-php-ext-install pcntl
 
+RUN docker-php-ext-configure pcntl --enable-pcntl # включить поддержку pcntl для reverb
+
 # Install Redis extension
 RUN pecl install redis && docker-php-ext-enable redis
 

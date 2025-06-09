@@ -31,13 +31,15 @@ class HandleFileTaskAnswer implements ShouldQueue
         int     $userId,
         int     $projectId,
         string  $status,
-        string $message,
+        ?string $message = null,
+        ?string $error = null
     )
     {
         $this->userId = $userId;
         $this->projectId = $projectId;
         $this->status = $status;
         $this->message = $message;
+        $this->error = $error;
     }
 
     public function handle(): void
