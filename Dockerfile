@@ -1,5 +1,5 @@
 # Choose a PHP version compatible with your Laravel project
-FROM php:8.4-fpm-alpine AS base
+FROM php:8.4-fpm AS base
 
 # Set working directory
 WORKDIR /var/www/html
@@ -32,10 +32,13 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install bcmath \
     && docker-php-ext-install exif \
     && docker-php-ext-install zip \
-    && docker-php-ext-install opcache
+    && docker-php-ext-install opcache \
+    && docker-php-ext-install pcntl \
 
 # Install Redis extension
 RUN pecl install redis && docker-php-ext-enable redis
+
+COPY docker/php.ini /usr/local/etc/php/conf.d/zz-custom.ini
 
 # Get latest Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
