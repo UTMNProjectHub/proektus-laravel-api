@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('description')->nullable();
+            $table->string('short_description')->nullable();
+            $table->string('annotation')->nullable();
             $table->string('logo')->nullable();
             $table->string('cover')->nullable();
             $table->vector('embedding', 768)->nullable();
