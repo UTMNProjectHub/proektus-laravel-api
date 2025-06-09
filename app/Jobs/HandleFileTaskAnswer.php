@@ -46,7 +46,7 @@ class HandleFileTaskAnswer implements ShouldQueue
 
         $user = User::find($this->userId);
         if ($user) {
-            $user->notify(new FileProcessed($this->projectId, $this->status, $this->message));
+            $user->notify(new FileProcessed($this->status === 'success' ? $this->message : $this->error, $this->status, $this->projectId, $this->userId));
             $this->delete();
         } else {
             Log::error("User with ID {$this->userId} not found.");

@@ -15,15 +15,17 @@ class FileProcessed extends Notification
     protected int $project_id;
     protected int $user_id;
     protected string $message;
+    protected string $status;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct(string $message, int $project_id, int $user_id)
+    public function __construct(string $message, string $status, int $project_id, int $user_id)
     {
         $this->project_id = $project_id;
         $this->user_id = $user_id;
         $this->message = $message;
+        $this->status = $status;
     }
 
     /**
@@ -33,7 +35,7 @@ class FileProcessed extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'broadcast'];
     }
 
     /**
@@ -56,6 +58,7 @@ class FileProcessed extends Notification
     {
         return [
             'message' => $this->message,
+            'status' => $this->status,
             'project_id' => $this->project_id,
             'user_id' => $this->user_id,
         ];
@@ -63,11 +66,7 @@ class FileProcessed extends Notification
 
     public function toBroadcast(object $notifiable): BroadcastMessage
     {
-        return new BroadcastMessage([
-            'message' => $this->message,
-            'project_id' => $this->project_id,
-            'user_id' => $this->user_id,
-        ]);
+        return (new BroadcastMessage($this->toArray($notifiable)));
     }
 
     public function databaseType(): string
@@ -78,5 +77,10 @@ class FileProcessed extends Notification
     public function initialDatabaseReadAtValue(): ?Carbon
     {
         return null;
+    }
+
+    public function broadcastType(): string
+    {
+        return 'file_processed';
     }
 }

@@ -1,10 +1,12 @@
 <?php
 
 use App\Http\Controllers\User\AdminUserController;
+use App\Http\Controllers\UserNotificationController;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Broadcast;
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return new UserResource(Auth::user()->load('roles'));
@@ -44,6 +46,12 @@ Route::prefix('/profile')->group(function () {
         Route::get('/', 'show');
         Route::put('/', 'update');
     })->middleware(['auth:sanctum']);
+
+    Route::controller(UserNotificationController::class)->group(function () {
+        Route::get('/notifications', 'index')->middleware(['auth:sanctum']);
+        Route::post('/notifications', 'markAllAsRead')->middleware(['auth:sanctum']);
+        Route::delete('/notifications/{notification}', 'destroy')->middleware(['auth:sanctum']);
+    });
 });
 
 
@@ -59,8 +67,8 @@ Route::prefix('/projects')->group(function () {
 
     Route::controller(App\Http\Controllers\Project\ProjectFileController::class)->group(function () {
         Route::get('/{id}/files', 'index');
-        Route::post('/{id}/files', 'upload');
-        Route::delete('/{id}/files', 'destroy');
+        Route::post('/{id}/files', 'upload')->middleware(['auth:sanctum']);
+        Route::delete('/{id}/files', 'destroy')->middleware(['auth:sanctum']);
     });
 
     Route::controller(\App\Http\Controllers\Project\ProjectUserController::class)->group(function () {
