@@ -22,6 +22,7 @@ RUN apk update && apk add --no-cache \
     git \
     postgresql-dev \
     autoconf \
+    pcntl \
     $PHPIZE_DEPS
 
 # Install PHP extensions
