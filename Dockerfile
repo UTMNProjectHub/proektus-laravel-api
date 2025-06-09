@@ -32,7 +32,7 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install exif \
     && docker-php-ext-install zip \
     && docker-php-ext-install opcache \
-    && docker-php-ext-install pcntl \
+    && docker-php-ext-install pcntl
 
 # Install Redis extension
 RUN pecl install redis && docker-php-ext-enable redis
