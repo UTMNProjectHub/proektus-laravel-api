@@ -47,7 +47,7 @@ class Project extends Model
 
     function tags(): BelongsToMany
     {
-        return $this->belongsToMany(Tag::class, 'projects_tags');
+        return $this->belongsToMany(Tag::class, 'project_tags');
     }
 
     function urls(): HasMany
