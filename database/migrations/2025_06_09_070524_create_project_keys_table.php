@@ -11,16 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('projects', function (Blueprint $table) {
+        Schema::create('project_keys', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('description')->nullable();
-            $table->string('logo')->nullable();
-            $table->string('cover')->nullable();
-            $table->vector('embedding', 768)->nullable();
-
+            $table->foreignId('project_id')->constrained('projects')->onDelete('cascade');
+            $table->string('key');
             $table->timestamps();
-            $table->softDeletes();
         });
     }
 
@@ -29,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('projects');
+        Schema::dropIfExists('project_keys');
     }
 };
