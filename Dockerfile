@@ -1,5 +1,5 @@
 # Choose a PHP version compatible with your Laravel project
-FROM php:8.4-fpm AS base
+FROM php:8.4-fpm-alpine AS base
 
 # Set working directory
 WORKDIR /var/www/html
@@ -22,7 +22,6 @@ RUN apk update && apk add --no-cache \
     git \
     postgresql-dev \
     autoconf \
-    pcntl \
     $PHPIZE_DEPS
 
 # Install PHP extensions
