@@ -72,7 +72,7 @@ Route::prefix('/projects')->group(function () {
     });
 
     Route::controller(\App\Http\Controllers\Project\ProjectUserController::class)->group(function () {
-        Route::get('/{project_id}/users', 'index')->middleware(['auth:sanctum']);
+        Route::get('/{project_id}/users', 'index');
         Route::post('/{project_id}/users', 'store')->middleware(['auth:sanctum']);
         Route::put('/{project_id}/users/{user_id}', 'update')->middleware(['auth:sanctum']);
         Route::delete('/{project_id}/users/{user_id}', 'destroy')->middleware(['auth:sanctum']);

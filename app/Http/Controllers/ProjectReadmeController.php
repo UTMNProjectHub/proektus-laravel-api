@@ -12,8 +12,19 @@ class ProjectReadmeController extends Controller
     {
         $project = \App\Models\Project::findOrFail($project_id);
 
+        $user = $request->user();
+
+        if (!$user) {
+            if ($project->privacy === 'private') {
+                return response()->json([
+                    'error' => 'У вас нет доступа к этому проекту',
+                ], 403);
+            }
+            return response()->json($project->readme, 200);
+        }
+
         try {
-            if (!$project::visible($request->user())) {
+            if (!$project::visible($user)) {
                 return response()->json([
                     'error' => 'У вас нет доступа к этому проекту',
                 ], 403);

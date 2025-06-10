@@ -20,7 +20,16 @@ class ProjectFileController extends Controller
     function index(Request $request, $project_id)
     {
         $project = Project::findOrFail($project_id);
-        $user = Auth::user();
+        $user = $request->user();
+
+        if (!$user) {
+            if ($project->privacy === 'private') {
+                return response()->json(['error' => 'У вас нет доступа к этому проекту'], 403);
+            }
+            $files = $project->files()->with(['user'])->get();
+            return response()->json(['files' => $files], 200);
+        }
+
 
         if ($project::visible($user)) {
             $files = $project->files()->with(['user'])->get();
