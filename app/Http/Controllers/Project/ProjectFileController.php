@@ -100,7 +100,7 @@ class ProjectFileController extends Controller
     {
         $file = ProjectFile::findOrFail($file_id);
 
-        $user = Auth::user();
+        $user = $request->user();
 
         if (Gate::denies('can-edit-project', [$file->project, $user])) {
             return response()->json(['message' => 'У вас нет прав на загрузку этого файла'], 403);
