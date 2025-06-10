@@ -14,9 +14,13 @@ return new class extends Migration
         Schema::create('projects', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('description')->nullable();
+            $table->text('description')->nullable();
+            $table->text('short_description')->nullable();
+            $table->text('annotation')->nullable();
             $table->string('logo')->nullable();
             $table->string('cover')->nullable();
+            $table->vector('embedding', 768)->nullable();
+
             $table->timestamps();
             $table->softDeletes();
         });
