@@ -16,13 +16,13 @@ class ProjectController extends Controller
     public function index(Request $request)
     {
         $per_page = $request->input('per_page', 8);
-        $user = Auth::user();
+        $user = $request->user();
 
 
         if ($user) {
             $projects = Project::visible($user);
         } else {
-            return response()->json(Project::where('privacy', 'public'), 200);
+            return response()->json(Project::where('privacy', 'public')->get(), 200);
         }
 
         if ($request->has('user')) {
