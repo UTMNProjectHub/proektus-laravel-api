@@ -22,7 +22,7 @@ class ProjectController extends Controller
         if ($user) {
             $projects = Project::visible($user);
         } else {
-            return response()->json(Project::where('privacy', 'public')->paginate($per_page), 200);
+            return response()->json(Project::where('privacy', 'public')->with('tags')->paginate($per_page), 200);
         }
 
         if ($request->has('user')) {
