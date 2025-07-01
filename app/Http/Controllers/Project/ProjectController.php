@@ -16,13 +16,13 @@ class ProjectController extends Controller
     public function index(Request $request)
     {
         $per_page = $request->input('per_page', 8);
-        $user = Auth::user();
+        $user = $request->user();
 
 
         if ($user) {
             $projects = Project::visible($user);
         } else {
-            return response()->json(Project::where('privacy', 'public'), 200);
+            return response()->json(Project::where('privacy', 'public')->with('tags')->paginate($per_page), 200);
         }
 
         if ($request->has('user')) {
@@ -48,7 +48,17 @@ class ProjectController extends Controller
             return response()->json(['error' => 'Project not found: ' . $e->getMessage()], 404);
         }
 
-        if (request()->user()->cannot('view', $project)) {
+        $user = request()->user();
+
+        if (!$user) {
+            if ($project->privacy === 'private') {
+                return response()->json(['error' => 'Unauthorized'], 403);
+            }
+            $project->load(['users', 'tags', 'urls']);
+            return response()->json($project, 200);
+        }
+
+        if ($user->cannot('view', $project)) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 

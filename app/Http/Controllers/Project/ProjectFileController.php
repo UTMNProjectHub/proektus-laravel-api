@@ -20,20 +20,29 @@ class ProjectFileController extends Controller
     function index(Request $request, $project_id)
     {
         $project = Project::findOrFail($project_id);
-        $user = Auth::user();
+        $user = $request->user();
+
+        if (!$user) {
+            if ($project->privacy === 'private') {
+                return response()->json(['error' => 'У вас нет доступа к этому проекту'], 403);
+            }
+            $files = $project->files()->with(['user'])->get();
+            return response()->json(['files' => $files], 200);
+        }
+
 
         if ($project::visible($user)) {
             $files = $project->files()->with(['user'])->get();
             return response()->json(['files' => $files], 200);
-        } else {
-            return response()->json(['message' => 'У вас нет прав на просмотр файлов этого проекта'], 403);
         }
+
+        return response()->json(['message' => 'У вас нет прав на просмотр файлов этого проекта'], 403);
     }
 
     function upload(Request $request, FileService $fileService)
     {
         $validator = Validator::make($request->all(), [
-            'file' => ['required', 'file', 'mimes:pdf,docx,doc,dot,xlsx,xls,csv'],
+            'file' => ['required', 'file', 'mimes:pdf,docx,txt', 'max:25600'],
             'project_id' => ['required', 'integer', 'exists:projects,id'],
         ]);
 
@@ -91,7 +100,7 @@ class ProjectFileController extends Controller
     {
         $file = ProjectFile::findOrFail($file_id);
 
-        $user = Auth::user();
+        $user = $request->user();
 
         if (Gate::denies('can-edit-project', [$file->project, $user])) {
             return response()->json(['message' => 'У вас нет прав на загрузку этого файла'], 403);

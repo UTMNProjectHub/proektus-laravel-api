@@ -19,12 +19,6 @@ class FileService
         try {
             $file_content = $file->get();
 
-            $task = Redis::lpush('file-tasks-requests', json_encode([
-                'user_id' => $user->id,
-                'project_id' => $project_id,
-                'object_keys' => [$file_objectKey],
-            ], JSON_UNESCAPED_SLASHES));
-
             $new_file = $user->files()->create([
                 's3_key' => $file_objectKey,
                 'original_filename' => $file->getClientOriginalName(),
@@ -32,6 +26,12 @@ class FileService
             ]);
 
             $new_file->contents = $file_content;  // ->content saves the file to s3
+
+            $task = Redis::lpush('file-tasks-requests', json_encode([
+                'user_id' => $user->id,
+                'project_id' => $project_id,
+                'object_keys' => [$file_objectKey],
+            ], JSON_UNESCAPED_SLASHES));
         } catch (\Exception $e) {
             throw new \Exception('Не получилось сохранить файл: ' . $e->getMessage(), 500);
         }
